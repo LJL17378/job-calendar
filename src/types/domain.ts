@@ -27,7 +27,7 @@ export interface CalendarEvent {
   stageId: string | null
   importedUid: string | null
   recurrenceId: string | null
-  color?: string
+  color?: string | null
 }
 
 export interface CalendarEventException {
@@ -35,7 +35,7 @@ export interface CalendarEventException {
   eventId: string
   occurrenceStart: string
   cancelled: boolean
-  override: Partial<Pick<CalendarEvent, 'title' | 'description' | 'location' | 'start' | 'end' | 'allDay'>>
+  override: Partial<Pick<CalendarEvent, 'title' | 'description' | 'location' | 'start' | 'end' | 'allDay' | 'color'>>
 }
 
 export interface Company {

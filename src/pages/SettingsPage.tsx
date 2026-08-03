@@ -8,7 +8,6 @@ import {
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { useAuth } from "../auth/AuthProvider";
 import { useStore } from "../data/store";
@@ -16,13 +15,6 @@ import { useStore } from "../data/store";
 export default function SettingsPage() {
   const { demoMode, signOut } = useAuth();
   const { resetDemo } = useStore();
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  useEffect(() => {
-    const listener = () => setUpdateAvailable(true);
-    window.addEventListener("job-calendar:update-available", listener);
-    return () =>
-      window.removeEventListener("job-calendar:update-available", listener);
-  }, []);
   return (
     <section className="page settings-page">
       <PageHeader title="设置" />
@@ -148,21 +140,6 @@ export default function SettingsPage() {
           </div>
         </section>
       </div>
-      {updateAvailable && (
-        <div className="update-toast">
-          <DownloadCloud size={19} />
-          <div>
-            <strong>发现新版本</strong>
-            <span>刷新页面即可更新 Job Calendar。</span>
-          </div>
-          <button
-            className="primary-button"
-            onClick={() => window.location.reload()}
-          >
-            立即更新
-          </button>
-        </div>
-      )}
     </section>
   );
 }

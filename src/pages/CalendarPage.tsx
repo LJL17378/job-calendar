@@ -19,9 +19,11 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import { CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EventEditor, type EventDraft } from "../components/EventEditor";
+import { EventDetails } from "../components/EventDetails";
 import { useStore } from "../data/store";
 import { createId } from "../lib/id";
 import { holidayInputs } from "../lib/holidays";
+import { getCalendarScrollMinutes } from "../lib/calendarScroll";
 import type { CalendarEvent, CalendarEventException } from "../types/domain";
 
 type CalendarView =
@@ -40,8 +42,8 @@ function rruleInput(
     title: event.title,
     allDay: event.allDay,
     extendedProps: { domainId: event.id },
-    backgroundColor: event.color,
-    borderColor: event.color,
+    backgroundColor: event.color ?? undefined,
+    borderColor: event.color ?? undefined,
   };
   if (!event.recurrenceRule)
     return { ...base, start: event.start, end: event.end };
@@ -83,8 +85,8 @@ function exceptionInputs(
                 new Date(parent.start).getTime(),
             ).toISOString(),
           allDay: exception.override.allDay ?? parent.allDay,
-          backgroundColor: colors.get(parent.calendarId),
-          borderColor: colors.get(parent.calendarId),
+          backgroundColor: exception.override.color ?? parent.color ?? colors.get(parent.calendarId),
+          borderColor: exception.override.color ?? parent.color ?? colors.get(parent.calendarId),
           extendedProps: {
             domainId: parent.id,
             occurrenceStart: exception.occurrenceStart,
@@ -103,6 +105,7 @@ export default function CalendarPage() {
   );
   const [title, setTitle] = useState("");
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
+  const [editing, setEditing] = useState(false);
   const [selectedOccurrence, setSelectedOccurrence] =
     useState<EventDraft | null>(null);
   const [draft, setDraft] = useState<EventDraft | null>(null);
@@ -124,7 +127,7 @@ export default function CalendarPage() {
     );
     const domain = visibleEvents.map((event) =>
       rruleInput(
-        { ...event, color: colors.get(event.calendarId) },
+        { ...event, color: event.color ?? colors.get(event.calendarId) },
         store.exceptions,
       ),
     );
@@ -153,6 +156,18 @@ export default function CalendarPage() {
   function changeView(next: CalendarView) {
     calendarRef.current?.getApi().changeView(next);
     setView(next);
+  }
+  function updateVisibleRange(arg: DatesSetArg) {
+    setTitle(arg.view.title);
+    const minutes = getCalendarScrollMinutes(
+      arg.start,
+      arg.end,
+      arg.view.type,
+    );
+    if (minutes === null) return;
+    window.requestAnimationFrame(() =>
+      arg.view.calendar.scrollToTime({ minutes }),
+    );
   }
   function updateEvent(arg: EventDropArg | EventResizeDoneArg) {
     const domain = store.events.find((event) => event.id === arg.event.id);
@@ -195,6 +210,7 @@ export default function CalendarPage() {
     );
     if (domain) {
       setSelected(domain);
+      setEditing(false);
       setSelectedOccurrence(
         domain.recurrenceRule && arg.event.start
           ? {
@@ -220,6 +236,7 @@ export default function CalendarPage() {
     setSelected(null);
     setSelectedOccurrence(null);
     setDraft(null);
+    setEditing(false);
   };
 
   useEffect(() => {
@@ -416,7 +433,7 @@ export default function CalendarPage() {
               },
               multiMonthYear: { multiMonthMaxColumns: 4 },
             }}
-            datesSet={(arg: DatesSetArg) => setTitle(arg.view.title)}
+            datesSet={updateVisibleRange}
             dateClick={createOnTouch}
             select={(arg: DateSelectArg) =>
               setDraft({
@@ -431,7 +448,15 @@ export default function CalendarPage() {
           />
         </div>
       </div>
-      {(selected || draft) && (
+      {selected && !editing && !draft && (
+        <EventDetails
+          event={selected}
+          occurrence={selectedOccurrence}
+          onEdit={() => setEditing(true)}
+          onClose={closeEditor}
+        />
+      )}
+      {(draft || (selected && editing)) && (
         <EventEditor
           event={selected}
           draft={draft}

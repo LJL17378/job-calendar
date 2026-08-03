@@ -2,12 +2,17 @@ import { DataSet } from 'vis-data'
 import { Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 import { useEffect, useMemo, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/PageHeader'
 import { useStore } from '../data/store'
 import { applicationStatusLabels, getApplicationSpan, getCompanyTimelineColor } from '../lib/applicationTimeline'
 import { formatDateTime } from '../lib/date'
 
 const day = 86_400_000
+
+function formatSpanDate(value: string) {
+  return new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric' }).format(new Date(value))
+}
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]!)
@@ -25,10 +30,14 @@ export default function TimelinePage() {
 
   useEffect(() => {
     if (!container.current || window.matchMedia('(max-width: 720px)').matches) return
-    const groups = new DataSet(rows.map(({ application, company, color }) => ({
-      id: application.id,
-      content: `<div class="timeline-group"><i style="background:${color}"></i><div><strong>${escapeHtml(company?.name ?? '')}</strong><span>${escapeHtml(application.role)}</span></div><em class="status-${application.status}">${applicationStatusLabels[application.status]}</em></div>`,
-    })))
+    const groups = new DataSet(rows.map(({ application, company, color }) => {
+      const companyName = company?.name ?? application.role
+      const role = application.role === companyName ? '' : application.role
+      return {
+        id: application.id,
+        content: `<div class="timeline-group" style="width:210px"><i style="background:${color}"></i><div><strong>${escapeHtml(companyName)}</strong>${role ? `<span>${escapeHtml(role)}</span>` : ''}</div><em class="status-${application.status}">${applicationStatusLabels[application.status]}</em></div>`,
+      }
+    }))
     const now = Date.now()
     const items = new DataSet(rows.flatMap(({ application, events, span, color }) => [
       {
@@ -49,24 +58,24 @@ export default function TimelinePage() {
         start: event.start,
         type: 'box',
         className: `timeline-node ${new Date(event.end).getTime() < now ? 'past' : 'upcoming'}`,
-        style: `--timeline-color:${color}`,
+        style: `--timeline-color:${event.color ?? color}`,
         editable: true,
       })),
     ]))
     const allStarts = rows.flatMap((row) => [new Date(row.span.start).getTime(), ...row.events.map((event) => new Date(event.start).getTime())])
     const allEnds = rows.flatMap((row) => [new Date(row.span.end).getTime(), ...row.events.map((event) => new Date(event.end).getTime())])
-    const windowStart = allStarts.length ? Math.min(...allStarts) - day * 3 : Date.now() - day * 10
-    const windowEnd = allEnds.length ? Math.max(...allEnds) + day * 3 : Date.now() + day * 28
+    const windowStart = allStarts.length ? Math.min(...allStarts) - day : Date.now() - day * 3
+    const windowEnd = allEnds.length ? Math.max(Math.max(...allEnds) + day, windowStart + day * 7) : Date.now() + day * 4
     const timeline = new Timeline(container.current, items, groups, {
       autoResize: true,
-      height: Math.max(390, rows.length * 112 + 100),
+      height: Math.max(180, rows.length * 92 + 76),
       stack: true,
       showCurrentTime: true,
       zoomMin: day * 3,
       zoomMax: day * 365,
       start: new Date(windowStart),
-      end: new Date(Math.max(windowEnd, windowStart + day * 14)),
-      margin: { item: { horizontal: 4, vertical: 8 }, axis: 16 },
+      end: new Date(windowEnd),
+      margin: { item: { horizontal: 5, vertical: 7 }, axis: 12 },
       orientation: 'top',
       format: {
         minorLabels: { day: 'D日', weekday: 'D日', month: 'M月' },
@@ -92,16 +101,17 @@ export default function TimelinePage() {
     <section className="page timeline-page">
       <PageHeader title="招聘时间线" />
       <div className="timeline-card">
-        <div className="timeline-legend"><span><i className="duration" />岗位持续时间</span><span><i className="milestone" />日程节点</span><span><i className="today" />今天</span></div>
+        <div className="timeline-toolbar"><div className="timeline-count"><strong>{rows.length}</strong><span>个岗位</span></div><div className="timeline-legend"><span><i className="duration" />持续时间</span><span><i className="milestone" />日程节点</span><span><i className="today" />今天</span></div></div>
         <div ref={container} className="desktop-timeline" />
         <div className="mobile-timeline">
-          {rows.map(({ application, company, events, span, color }) => (
-            <article key={application.id} style={{ '--timeline-color': color } as React.CSSProperties}>
-              <header><span className="company-avatar" style={{ background: color }}>{company?.name.slice(0, 1)}</span><div><strong>{company?.name}</strong><span>{application.role}</span></div><em className={`mobile-status status-${application.status}`}>{applicationStatusLabels[application.status]}</em></header>
-              <div className="mobile-duration"><i /><div><strong>{span.durationDays} 天</strong><span>{formatDateTime(span.start)} → {application.status === 'active' ? '至今' : formatDateTime(span.end)}</span></div></div>
-              {events.length === 0 ? <p className="timeline-empty">持续跟踪中，尚未添加日程节点</p> : <ol>{events.map((event) => <li className={new Date(event.end) < new Date() ? 'completed' : 'active'} key={event.id}><i /><div><strong>{event.title}</strong><span>{formatDateTime(event.start)}</span></div></li>)}</ol>}
+          {rows.map(({ application, company, events, span, color }) => {
+            const companyName = company?.name ?? application.role
+            return <article key={application.id} style={{ '--timeline-color': color } as React.CSSProperties}>
+              <header><i className="mobile-company-color" /><div><strong>{companyName}</strong>{application.role !== companyName && <span>{application.role}</span>}</div><em className={`mobile-status status-${application.status}`}>{applicationStatusLabels[application.status]}</em></header>
+              <div className="mobile-duration"><div><strong>{span.durationDays} 天</strong><span>{formatSpanDate(span.start)} — {application.status === 'active' ? '今天' : formatSpanDate(span.end)}</span></div><i /></div>
+              {events.length === 0 ? <div className="timeline-empty"><span>还没有笔试或面试日程</span><Link to={`/applications/${application.id}`}>添加节点</Link></div> : <ol>{events.map((event) => <li className={new Date(event.end) < new Date() ? 'completed' : 'active'} key={event.id} style={{ '--timeline-color': event.color ?? color } as React.CSSProperties}><i /><div><strong>{event.title}</strong><span>{formatDateTime(event.start)}</span></div></li>)}</ol>}
             </article>
-          ))}
+          })}
         </div>
       </div>
     </section>

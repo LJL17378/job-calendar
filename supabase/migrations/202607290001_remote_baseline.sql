@@ -1,0 +1,3 @@
+-- Baseline migration created in the hosted Supabase project before this
+-- repository adopted local migrations. The remote migration is already
+-- applied; this marker keeps local and remote migration histories aligned.

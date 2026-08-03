@@ -8,6 +8,14 @@ import { DateTimePicker } from './DateTimePicker'
 
 export interface EventDraft { start: string; end: string; allDay: boolean }
 
+const eventColorPresets = [
+  { label: '面试', value: '#e76f51' },
+  { label: '笔试 / OA', value: '#8b5cf6' },
+  { label: '截止日期', value: '#d97706' },
+  { label: '跟进', value: '#2a9d8f' },
+  { label: '准备', value: '#4f6bed' },
+]
+
 export function EventEditor({ event, draft, occurrence, initialApplicationId, onClose }: { event: CalendarEvent | null; draft: EventDraft | null; occurrence?: EventDraft | null; initialApplicationId?: string; onClose: () => void }) {
   const { calendars, applications, companies, saveEvent, deleteEvent, saveException } = useStore()
   const fallbackStart = occurrence?.start ?? draft?.start ?? new Date().toISOString()
@@ -21,6 +29,7 @@ export function EventEditor({ event, draft, occurrence, initialApplicationId, on
   const [allDay, setAllDay] = useState(event?.allDay ?? draft?.allDay ?? false)
   const [recurrence, setRecurrence] = useState(event?.recurrenceRule?.replace('FREQ=', '').toLowerCase() ?? 'none')
   const [applicationId, setApplicationId] = useState(event?.applicationId ?? initialApplicationId ?? '')
+  const [color, setColor] = useState(event?.color ?? '')
   const [dirty, setDirty] = useState(false)
   const [editScope, setEditScope] = useState<'single' | 'series'>(event?.recurrenceRule && occurrence ? 'single' : 'series')
 
@@ -51,9 +60,10 @@ export function EventEditor({ event, draft, occurrence, initialApplicationId, on
       recurrenceRule: recurrence === 'none' ? null : `FREQ=${recurrence.toUpperCase()}`,
       applicationId: applicationId || null, stageId: null,
       importedUid: event?.importedUid ?? null, recurrenceId: event?.recurrenceId ?? null,
+      color: color || null,
     }
     if (event?.recurrenceRule && occurrence && editScope === 'single') {
-      saveException({ id: createId('exception'), eventId: event.id, occurrenceStart: occurrence.start, cancelled: false, override: { title: next.title, description: next.description, location: next.location, start: next.start, end: next.end, allDay: next.allDay } })
+      saveException({ id: createId('exception'), eventId: event.id, occurrenceStart: occurrence.start, cancelled: false, override: { title: next.title, description: next.description, location: next.location, start: next.start, end: next.end, allDay: next.allDay, color: next.color } })
     } else saveEvent(next)
     setDirty(false); onClose()
   }
@@ -69,6 +79,7 @@ export function EventEditor({ event, draft, occurrence, initialApplicationId, on
           <label className="field"><span>开始</span><DateTimePicker value={start} onChange={changeStart}/></label>
           <label className="field"><span>结束</span><DateTimePicker value={end} min={start} onChange={(value) => { setDirty(true); setEnd(value) }}/></label>
         </div>
+        <fieldset className="event-color-field"><legend>日程颜色</legend><div className="event-color-options"><button type="button" className={!color ? 'selected follow-calendar' : 'follow-calendar'} onClick={() => mark(setColor)('')}><i />跟随日历</button>{eventColorPresets.map((preset) => <button type="button" className={color === preset.value ? 'selected' : ''} key={preset.value} onClick={() => mark(setColor)(preset.value)}><i style={{ background: preset.value }}/>{preset.label}</button>)}</div></fieldset>
         <label className="toggle-row"><input type="checkbox" checked={allDay} onChange={(e) => mark(setAllDay)(e.target.checked)}/><span>全天日程</span></label>
         <div className="field-grid">
           <label className="field"><span>日历</span><select value={calendarId} onChange={(e) => setCalendarId(e.target.value)}>{calendars.filter((calendar) => !calendar.readOnly).map((calendar) => <option value={calendar.id} key={calendar.id}>{calendar.name}</option>)}</select></label>

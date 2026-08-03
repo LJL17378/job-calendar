@@ -32,6 +32,16 @@ test("desktop creates an event from the calendar context menu", async ({
   await expect(page.getByRole("heading", { name: "新建日程" })).toBeVisible();
 });
 
+test("opening an event shows details before editing", async ({ page }) => {
+  await page.goto("/calendar");
+  await page.locator(".fc-event").filter({ hasText: "字节跳动 · 一面" }).click();
+  await expect(page.getByLabel("日程详情")).toBeVisible();
+  await expect(page.getByText("飞书会议")).toBeVisible();
+  await expect(page.getByLabel("日程详情").locator("input")).toHaveCount(0);
+  await page.getByRole("button", { name: "编辑" }).click();
+  await expect(page.getByLabel("日程编辑器")).toBeVisible();
+});
+
 test("job detail creates a calendar node already bound to the application", async ({
   page,
 }) => {
