@@ -7,6 +7,7 @@ interface AuthApi {
   loading: boolean
   demoMode: boolean
   signInWithOtp: (email: string) => Promise<string | null>
+  verifyEmailOtp: (email: string, token: string) => Promise<string | null>
   signOut: () => Promise<void>
 }
 
@@ -30,6 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithOtp: async (email) => {
       if (!supabase) return '当前为本地演示模式，无需登录。'
       const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } })
+      return error?.message ?? null
+    },
+    verifyEmailOtp: async (email, token) => {
+      if (!supabase) return '当前为本地演示模式，无需登录。'
+      const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
       return error?.message ?? null
     },
     signOut: async () => { if (supabase) await supabase.auth.signOut() },

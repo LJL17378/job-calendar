@@ -1,127 +1,68 @@
-import {
-  ArrowLeft,
-  CalendarPlus,
-  Check,
-  ChevronRight,
-  Circle,
-  RotateCcw,
-} from "lucide-react";
-import { Link, Navigate, useParams } from "react-router-dom";
-import { PageHeader } from "../components/PageHeader";
-import { useStore } from "../data/store";
-import { formatDateTime } from "../lib/date";
+import { ArrowLeft, CalendarPlus, Clock3, MapPin, Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, Navigate, useParams } from 'react-router-dom'
+import { EventEditor, type EventDraft } from '../components/EventEditor'
+import { PageHeader } from '../components/PageHeader'
+import { useStore } from '../data/store'
+import { formatDateTime } from '../lib/date'
+import type { CalendarEvent } from '../types/domain'
+
+function newEventDraft(): EventDraft {
+  const start = new Date()
+  start.setSeconds(0, 0)
+  start.setMinutes(Math.ceil(start.getMinutes() / 15) * 15)
+  return { start: start.toISOString(), end: new Date(start.getTime() + 60 * 60 * 1000).toISOString(), allDay: false }
+}
 
 export default function ApplicationDetailPage() {
-  const { id } = useParams();
-  const store = useStore();
-  const application = store.applications.find((item) => item.id === id);
-  if (!application) return <Navigate to="/applications" replace />;
-  const company = store.companies.find(
-    (item) => item.id === application.companyId,
-  );
-  const stages = store.stages
-    .filter((stage) => stage.applicationId === application.id)
-    .sort((a, b) => a.position - b.position);
-  const transitions = store.transitions
-    .filter((transition) => transition.applicationId === application.id)
-    .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt));
+  const { id } = useParams()
+  const store = useStore()
+  const [draft, setDraft] = useState<EventDraft | null>(null)
+  const [selected, setSelected] = useState<CalendarEvent | null>(null)
+  const application = store.applications.find((item) => item.id === id)
+  const events = useMemo(
+    () => store.events.filter((event) => event.applicationId === id).sort((a, b) => a.start.localeCompare(b.start)),
+    [id, store.events],
+  )
+  if (!application) return <Navigate to="/applications" replace />
+  const company = store.companies.find((item) => item.id === application.companyId)
+  const closeEditor = () => { setDraft(null); setSelected(null) }
+  const addNode = () => setDraft(newEventDraft())
+
   return (
     <section className="page detail-page">
-      <Link className="back-link" to="/applications">
-        <ArrowLeft size={17} />
-        返回岗位
-      </Link>
+      <Link className="back-link" to="/applications"><ArrowLeft size={17} />返回岗位</Link>
       <PageHeader
         title={application.role}
-        meta={[
-          company?.name,
-          application.location,
-          application.source,
-          application.workMode,
-        ]
-          .filter(Boolean)
-          .join(" · ")}
-        actions={
-          <Link to="/calendar" className="secondary-button">
-            <CalendarPlus size={17} />
-            安排日程
-          </Link>
-        }
+        meta={[company?.name, application.location, application.source, application.workMode].filter(Boolean).join(' · ')}
+        actions={<button className="primary-button" onClick={addNode}><Plus size={17} />新增节点</button>}
       />
-      <div className="detail-layout">
-        <div className="detail-main">
-          <section className="content-card">
-            <header>
-              <h2>招聘流程</h2>
-              <span className="muted">点击节点手动推进</span>
-            </header>
-            <div className="stage-list">
-              {stages.map((stage) => (
-                <button
-                  key={stage.id}
-                  className={`stage-row ${stage.status}`}
-                  onClick={() => store.moveStage(application.id, stage.id)}
-                >
-                  <span className="stage-state">
-                    {stage.status === "completed" ? (
-                      <Check size={16} />
-                    ) : stage.status === "active" ? (
-                      <Circle size={16} fill="currentColor" />
-                    ) : (
-                      <Circle size={16} />
-                    )}
-                  </span>
-                  <div>
-                    <strong>{stage.name}</strong>
-                    <span>
-                      {stage.completedAt
-                        ? `完成于 ${formatDateTime(stage.completedAt)}`
-                        : stage.plannedAt
-                          ? `计划 ${formatDateTime(stage.plannedAt)}`
-                          : stage.status === "active"
-                            ? "当前阶段"
-                            : "尚未开始"}
-                    </span>
-                  </div>
-                  <ChevronRight size={18} />
+      <div className="detail-main">
+        <section className="content-card">
+          <header>
+            <div><h2>日程节点</h2><p>每个节点都是一条与此岗位绑定的日程。</p></div>
+            <button className="secondary-button compact" onClick={addNode}><CalendarPlus size={16} />添加</button>
+          </header>
+          {events.length === 0 ? (
+            <button className="node-empty" onClick={addNode}><CalendarPlus size={22} /><strong>添加第一个节点</strong><span>记录投递、笔试、面试、截止日期或跟进安排</span></button>
+          ) : (
+            <div className="node-list">
+              {events.map((event) => (
+                <button key={event.id} className="node-row" onClick={() => setSelected(event)}>
+                  <i style={{ background: store.calendars.find((calendar) => calendar.id === event.calendarId)?.color }} />
+                  <div><strong>{event.title}</strong><span><Clock3 size={13} />{formatDateTime(event.start)} – {new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(event.end))}</span></div>
+                  <span className="node-location">{event.location && <><MapPin size={13} />{event.location}</>}</span>
                 </button>
               ))}
             </div>
-          </section>
-          <section className="content-card">
-            <header>
-              <h2>岗位笔记</h2>
-            </header>
-            <p className="notes-content">
-              {application.notes || "还没有记录笔记。"}
-            </p>
-          </section>
-        </div>
-        <aside className="history-panel">
-          <h2>推进记录</h2>
-          {transitions.length === 0 ? (
-            <div className="history-empty">
-              <RotateCcw size={20} />
-              <p>推进阶段后，所有历史会保留在这里。</p>
-            </div>
-          ) : (
-            <ol>
-              {transitions.map((transition) => (
-                <li key={transition.id}>
-                  <i />
-                  <div>
-                    <strong>
-                      {stages.find((stage) => stage.id === transition.toStageId)
-                        ?.name ?? "状态更新"}
-                    </strong>
-                    <span>{formatDateTime(transition.occurredAt)}</span>
-                  </div>
-                </li>
-              ))}
-            </ol>
           )}
-        </aside>
+        </section>
+        <section className="content-card">
+          <header><h2>岗位笔记</h2></header>
+          <p className="notes-content">{application.notes || '还没有记录笔记。'}</p>
+        </section>
       </div>
+      {(draft || selected) && <EventEditor event={selected} draft={draft} initialApplicationId={application.id} onClose={closeEditor} />}
     </section>
-  );
+  )
 }

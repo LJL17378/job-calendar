@@ -5,6 +5,8 @@ function report(error: unknown) { if (error) console.error('[Job Calendar / Supa
 
 export async function loadCloudData(): Promise<AppData> {
   if (!supabase) throw new Error('Supabase is not configured')
+  const { error: workspaceError } = await supabase.rpc('ensure_user_workspace')
+  if (workspaceError) throw workspaceError
   const [calendars, events, exceptions, companies, applications, stages, transitions, subscriptions] = await Promise.all([
     supabase.from('calendars').select('*').order('created_at'),
     supabase.from('calendar_events').select('*').order('starts_at'),
@@ -28,8 +30,9 @@ export async function loadCloudData(): Promise<AppData> {
   }
 }
 
-const eventRow = (userId: string, event: CalendarEvent) => ({ id: event.id, user_id: userId, calendar_id: event.calendarId, title: event.title, description: event.description, location: event.location, starts_at: event.start, ends_at: event.end, all_day: event.allDay, time_zone: event.timeZone, recurrence_rule: event.recurrenceRule, application_id: event.applicationId, stage_id: event.stageId, imported_uid: event.importedUid, recurrence_id: event.recurrenceId })
-const applicationRow = (userId: string, item: Application, includeStage = true) => ({ id: item.id, user_id: userId, company_id: item.companyId, role: item.role, job_url: item.jobUrl, location: item.location, work_mode: item.workMode, salary: item.salary, source: item.source, applied_at: item.appliedAt, contact: item.contact, tags: item.tags, notes: item.notes, status: item.status, ...(includeStage ? { current_stage_id: item.currentStageId } : {}) })
+const nullableUuid = (value: string | null | undefined) => value || null
+const eventRow = (userId: string, event: CalendarEvent) => ({ id: event.id, user_id: userId, calendar_id: event.calendarId, title: event.title, description: event.description, location: event.location, starts_at: event.start, ends_at: event.end, all_day: event.allDay, time_zone: event.timeZone, recurrence_rule: event.recurrenceRule, application_id: nullableUuid(event.applicationId), stage_id: nullableUuid(event.stageId), imported_uid: event.importedUid, recurrence_id: event.recurrenceId })
+const applicationRow = (userId: string, item: Application, includeStage = true) => ({ id: item.id, user_id: userId, company_id: item.companyId, role: item.role, job_url: item.jobUrl, location: item.location, work_mode: item.workMode, salary: item.salary, source: item.source, applied_at: item.appliedAt, contact: item.contact, tags: item.tags, notes: item.notes, status: item.status, ...(includeStage ? { current_stage_id: nullableUuid(item.currentStageId) } : {}) })
 const stageRow = (userId: string, stage: PipelineStage) => ({ id: stage.id, user_id: userId, application_id: stage.applicationId, name: stage.name, position: stage.position, status: stage.status, planned_at: stage.plannedAt, completed_at: stage.completedAt, color: stage.color })
 
 export async function cloudSaveEvent(userId: string, event: CalendarEvent) { if (supabase) report((await supabase.from('calendar_events').upsert(eventRow(userId, event))).error) }
@@ -39,7 +42,7 @@ export async function cloudAddApplication(userId: string, company: Company, appl
   if (!supabase) return
   report((await supabase.from('companies').upsert({ id: company.id, user_id: userId, name: company.name, website: company.website, color: company.color })).error)
   report((await supabase.from('applications').upsert(applicationRow(userId, application, false))).error)
-  report((await supabase.from('application_stages').upsert(stages.map((stage) => stageRow(userId, stage)))).error)
+  if (stages.length) report((await supabase.from('application_stages').upsert(stages.map((stage) => stageRow(userId, stage)))).error)
   report((await supabase.from('applications').update({ current_stage_id: application.currentStageId }).eq('id', application.id)).error)
 }
 export async function cloudUpdateApplication(userId: string, application: Application) { if (supabase) report((await supabase.from('applications').upsert(applicationRow(userId, application))).error) }

@@ -16,12 +16,12 @@ import multiMonthPlugin from "@fullcalendar/multimonth";
 import FullCalendar from "@fullcalendar/react";
 import rrulePlugin from "@fullcalendar/rrule";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import chineseDays from "chinese-days";
 import { CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EventEditor, type EventDraft } from "../components/EventEditor";
 import { useStore } from "../data/store";
 import { createId } from "../lib/id";
+import { holidayInputs } from "../lib/holidays";
 import type { CalendarEvent, CalendarEventException } from "../types/domain";
 
 type CalendarView =
@@ -92,29 +92,6 @@ function exceptionInputs(
         },
       ];
     });
-}
-
-function holidayInputs(year: number): EventInput[] {
-  const start = new Date(year, 0, 1);
-  const result: EventInput[] = [];
-  for (let index = 0; index < 366 && start.getFullYear() === year; index += 1) {
-    const date = new Date(year, 0, 1 + index);
-    const key = `${year}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-    const detail = chineseDays.getDayDetail(key);
-    if (!detail.name.includes(",")) continue;
-    const [, chineseName] = detail.name.split(",");
-    result.push({
-      id: `holiday-${key}`,
-      title: detail.work ? `补班 · ${chineseName}` : chineseName,
-      start: key,
-      allDay: true,
-      display: "background",
-      backgroundColor: detail.work ? "#f5c76a22" : "#2a9d8f16",
-      textColor: detail.work ? "#9a6700" : "#18766b",
-      className: detail.work ? "holiday-workday" : "holiday-day",
-    });
-  }
-  return result;
 }
 
 export default function CalendarPage() {
@@ -427,6 +404,8 @@ export default function CalendarPage() {
             eventResizableFromStart
             eventStartEditable
             eventDurationEditable
+            eventMinHeight={24}
+            eventShortHeight={30}
             dayMaxEvents
             events={events}
             views={{

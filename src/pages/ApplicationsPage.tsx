@@ -1,4 +1,4 @@
-import { ArrowUpRight, BriefcaseBusiness, MapPin, Plus } from "lucide-react";
+import { BriefcaseBusiness, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApplicationEditor } from "../components/ApplicationEditor";
@@ -8,7 +8,7 @@ import { useStore } from "../data/store";
 import { formatDateTime } from "../lib/date";
 
 export default function ApplicationsPage() {
-  const { applications, companies, stages } = useStore();
+  const { applications, companies, events } = useStore();
   const [open, setOpen] = useState(false);
   const active = useMemo(
     () => applications.filter((application) => application.status === "active"),
@@ -19,9 +19,13 @@ export default function ApplicationsPage() {
       <PageHeader
         title="岗位"
         actions={
-          <button className="primary-button" onClick={() => setOpen(true)}>
-            <Plus size={18} />
-            添加岗位
+          <button
+            className="toolbar-add-button"
+            aria-label="添加岗位"
+            title="添加岗位"
+            onClick={() => setOpen(true)}
+          >
+            <Plus size={21} />
           </button>
         }
       />
@@ -54,72 +58,58 @@ export default function ApplicationsPage() {
           description="添加第一个岗位并开始记录招聘流程。"
         />
       ) : (
-        <div className="application-grid">
+        <div className="application-list">
+          <div className="application-list-header" aria-hidden="true">
+            <span>岗位</span>
+            <span>状态</span>
+            <span>日程节点</span>
+            <span>下个安排</span>
+            <span>最近更新</span>
+          </div>
           {applications.map((application) => {
             const company = companies.find(
               (item) => item.id === application.companyId,
             );
-            const current = stages.find(
-              (stage) => stage.id === application.currentStageId,
-            );
-            const allStages = stages.filter(
-              (stage) => stage.applicationId === application.id,
-            );
+            const linkedEvents = events
+              .filter((event) => event.applicationId === application.id)
+              .sort((a, b) => a.start.localeCompare(b.start));
+            const nextEvent = linkedEvents.find((event) => new Date(event.end).getTime() >= Date.now());
             return (
               <Link
-                className="application-card"
+                className="application-row"
                 key={application.id}
                 to={`/applications/${application.id}`}
               >
-                <div className="card-top">
-                  <span
-                    className="company-avatar"
-                    style={{ background: company?.color }}
-                  >
-                    {company?.name.slice(0, 1)}
-                  </span>
-                  <span className={`status-pill ${application.status}`}>
+                <div className="application-identity">
+                  <i style={{ background: company?.color }} />
+                  <div>
+                    <strong>{application.role}</strong>
+                    <span>
+                      {company?.name}
+                      {application.location ? ` · ${application.location}` : ""}
+                    </span>
+                  </div>
+                </div>
+                <span className={`application-status ${application.status}`}>
+                  <i />
+                  <span>
                     {application.status === "active"
                       ? "进行中"
                       : application.status}
                   </span>
+                </span>
+                <div className="application-stage">
+                  <strong>{linkedEvents.length} 个节点</strong>
+                  <span>{linkedEvents.length ? "已关联日历" : "尚未安排"}</span>
                 </div>
-                <div>
-                  <span className="company-name">{company?.name}</span>
-                  <h2>{application.role}</h2>
+                <div className="application-progress">
+                  <span>{nextEvent ? formatDateTime(nextEvent.start) : "暂无安排"}</span>
                 </div>
-                <div className="application-meta">
-                  <span>
-                    <MapPin size={15} />
-                    {application.location || "地点待定"}
-                  </span>
-                  <span>{application.source || "手动添加"}</span>
-                </div>
-                <div className="stage-progress">
-                  <div>
-                    <span>当前阶段</span>
-                    <strong>{current?.name ?? "未设置"}</strong>
-                  </div>
-                  <span>
-                    {current ? current.position + 1 : 0}/{allStages.length}
-                  </span>
-                  <div className="progress-track">
-                    <i
-                      style={{
-                        width: `${(((current?.position ?? -1) + 1) / Math.max(allStages.length, 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-                <footer>
-                  <span>
-                    更新于{" "}
-                    {formatDateTime(
-                      current?.completedAt ?? application.createdAt,
-                    )}
-                  </span>
-                  <ArrowUpRight size={18} />
-                </footer>
+                <time>
+                  {formatDateTime(
+                    linkedEvents.at(-1)?.start ?? application.createdAt,
+                  )}
+                </time>
               </Link>
             );
           })}
