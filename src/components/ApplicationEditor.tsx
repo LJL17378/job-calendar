@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useStore } from "../data/store";
 import { createId } from "../lib/id";
+import { getCompanyTimelineColor } from "../lib/applicationTimeline";
 import type { Application, Company } from "../types/domain";
 
 export function ApplicationEditor({ onClose }: { onClose: () => void }) {
@@ -19,7 +20,7 @@ export function ApplicationEditor({ onClose }: { onClose: () => void }) {
       id: companyId,
       name: companyName.trim(),
       website: "",
-      color: "#5b6ee1",
+      color: getCompanyTimelineColor(companyName.trim()),
     };
     const application: Application = {
       id: applicationId,

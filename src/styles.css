@@ -9,8 +9,8 @@
     "SF Pro Text",
     "Segoe UI",
     sans-serif;
-  color: #20201e;
-  background: #fff;
+  color: var(--text);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --bg: #fff;
@@ -26,6 +26,11 @@
   --holiday-text: #155f57;
   --workday-bg: #fff0cf;
   --workday-text: #765000;
+  --success-bg: #e8f7f1;
+  --success-text: #25785f;
+  --danger-bg: #fff0ef;
+  --danger-text: #b94747;
+  --neutral-bg: #efefec;
   --shadow: 0 18px 50px rgba(37, 37, 33, 0.12);
   --radius: 4px;
 }
@@ -44,6 +49,11 @@
   --holiday-text: #a9e2da;
   --workday-bg: #493b1e;
   --workday-text: #f3d48a;
+  --success-bg: #203c33;
+  --success-text: #83d9ba;
+  --danger-bg: #452727;
+  --danger-text: #ffaaa4;
+  --neutral-bg: #343431;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
 }
 * {
@@ -974,7 +984,7 @@ button:disabled {
   background: currentColor;
 }
 .application-status.active {
-  color: #258263;
+  color: var(--success-text);
 }
 .application-stage strong {
   font-size: 11px;
@@ -1269,6 +1279,20 @@ button:disabled {
 .timeline-legend i.planned {
   border: 1px solid var(--line-strong);
 }
+.timeline-legend i.duration {
+  width: 18px;
+  background: color-mix(in srgb, var(--accent) 28%, var(--panel));
+  border: 1px solid var(--accent);
+}
+.timeline-legend i.milestone {
+  border: 2px solid var(--accent);
+  background: var(--panel);
+}
+.timeline-legend i.today {
+  width: 2px;
+  border-radius: 0;
+  background: #e05a47;
+}
 .desktop-timeline {
   min-height: 420px;
 }
@@ -1281,6 +1305,12 @@ button:disabled {
 .vis-timeline {
   border: 0 !important;
   font-family: inherit !important;
+  background: var(--panel) !important;
+}
+.vis-panel,
+.vis-time-axis,
+.vis-labelset {
+  background: var(--panel) !important;
 }
 .vis-panel.vis-left {
   border-right-color: var(--line) !important;
@@ -1299,10 +1329,23 @@ button:disabled {
   color: var(--text) !important;
 }
 .timeline-group {
+  min-width: 150px;
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px;
+  padding: 10px;
+}
+.timeline-group > i {
+  width: 3px;
+  height: 34px;
+  margin-right: 7px;
+}
+.timeline-group > div {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: 10px;
 }
 .timeline-group strong {
   font-size: 10px;
@@ -1310,6 +1353,28 @@ button:disabled {
 .timeline-group span {
   color: var(--muted);
   font-size: 9px;
+}
+.timeline-group em,
+.mobile-status {
+  padding: 3px 5px;
+  border-radius: 3px;
+  color: var(--muted);
+  background: var(--neutral-bg);
+  font-size: 8px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.timeline-group em.status-active,
+.mobile-status.status-active,
+.timeline-group em.status-offer,
+.mobile-status.status-offer {
+  color: var(--success-text);
+  background: var(--success-bg);
+}
+.timeline-group em.status-rejected,
+.mobile-status.status-rejected {
+  color: var(--danger-text);
+  background: var(--danger-bg);
 }
 .vis-item {
   border: 0 !important;
@@ -1331,10 +1396,68 @@ button:disabled {
   background: var(--panel) !important;
   color: var(--text) !important;
 }
+.vis-item.timeline-application-span {
+  min-height: 25px;
+  border: 1px solid color-mix(in srgb, var(--timeline-color) 70%, var(--panel)) !important;
+  background: color-mix(in srgb, var(--timeline-color) 22%, var(--panel)) !important;
+  color: var(--text) !important;
+  font-weight: 650;
+}
+.vis-item.timeline-application-span.status-rejected,
+.vis-item.timeline-application-span.status-withdrawn,
+.vis-item.timeline-application-span.status-archived {
+  opacity: 0.62;
+}
+.vis-item.timeline-node {
+  border: 1px solid var(--timeline-color) !important;
+  border-left-width: 4px !important;
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--timeline-color) 14%, transparent);
+}
+.vis-item.timeline-node.past {
+  opacity: 0.72;
+}
+:root[data-theme='dark'] .vis-item.timeline-application-span {
+  border-color: color-mix(in srgb, var(--timeline-color) 48%, var(--text)) !important;
+  background: color-mix(in srgb, var(--timeline-color) 42%, var(--panel)) !important;
+}
+:root[data-theme='dark'] .vis-item.timeline-node {
+  border-color: color-mix(in srgb, var(--timeline-color) 58%, var(--text)) !important;
+  background: color-mix(in srgb, var(--timeline-color) 8%, var(--panel)) !important;
+}
 .timeline-empty {
   margin: 16px 0 0 47px;
   color: var(--muted);
   font-size: 10px;
+}
+.mobile-duration {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  margin: 15px 0 0 46px;
+}
+.mobile-duration > i {
+  width: 18px;
+  height: 6px;
+  border: 1px solid var(--timeline-color);
+  background: color-mix(in srgb, var(--timeline-color) 25%, var(--panel));
+}
+.mobile-duration > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mobile-duration strong {
+  font-size: 10px;
+}
+.mobile-duration span {
+  color: var(--muted);
+  font-size: 8px;
+}
+.mobile-status {
+  margin-left: auto;
 }
 .vis-current-time {
   width: 1px !important;
@@ -1366,16 +1489,16 @@ button:disabled {
   background: var(--accent-soft);
 }
 .section-icon.green {
-  color: #258263;
-  background: #e8f7f1;
+  color: var(--success-text);
+  background: var(--success-bg);
 }
 .section-icon.purple {
-  color: #8b5cf6;
-  background: #f2ebff;
+  color: color-mix(in srgb, #a78bfa 82%, var(--text));
+  background: color-mix(in srgb, #8b5cf6 18%, var(--panel));
 }
 .section-icon.amber {
-  color: #9a6700;
-  background: #fff3cd;
+  color: var(--workday-text);
+  background: var(--workday-bg);
 }
 .drop-zone {
   display: flex;
@@ -1953,12 +2076,12 @@ button:disabled {
     background: var(--panel);
   }
   .mobile-timeline li.completed > i {
-    border-color: #2a9d8f;
-    background: #2a9d8f;
+    border-color: var(--timeline-color);
+    background: var(--timeline-color);
   }
   .mobile-timeline li.active > i {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px var(--accent-soft);
+    border-color: var(--timeline-color);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--timeline-color) 16%, transparent);
   }
   .mobile-timeline li > div {
     display: flex;
@@ -2069,18 +2192,4 @@ button:disabled {
 .fc .holiday-workday {
   color: var(--workday-text) !important;
   text-shadow: none;
-}
-.vis-label .vis-inner > div {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 10px;
-}
-.vis-label .vis-inner > div strong {
-  font-size: 10px;
-}
-.vis-label .vis-inner > div span {
-  color: var(--muted);
-  font-size: 9px;
-  font-weight: 400;
 }

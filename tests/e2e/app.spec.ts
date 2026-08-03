@@ -54,6 +54,41 @@ test("mobile uses bottom navigation and vertical timeline", async ({
   await expect(page.locator(".desktop-timeline")).toBeHidden();
 });
 
+test("desktop timeline separates application durations from milestones", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/timeline");
+  await expect(page.locator(".timeline-application-span")).toHaveCount(3);
+  await expect(page.locator(".vis-box.timeline-node")).toHaveCount(3);
+  await expect(page.getByText("岗位持续时间")).toBeVisible();
+  const durationColor = await page
+    .locator(".timeline-application-span")
+    .first()
+    .evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(durationColor).not.toBe("rgba(0, 0, 0, 0)");
+});
+
+test("dark theme keeps calendar and timeline text readable", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.addInitScript(() =>
+    localStorage.setItem("job-calendar:theme", "dark"),
+  );
+  await page.goto("/calendar");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const colors = await page.locator("body").evaluate((element) => ({
+    foreground: getComputedStyle(element).color,
+    background: getComputedStyle(element).backgroundColor,
+  }));
+  expect(colors.foreground).not.toBe(colors.background);
+  await expect(page.getByText("我的日历")).toBeVisible();
+  await page.goto("/timeline");
+  await expect(page.locator(".timeline-application-span").first()).toBeVisible();
+  await expect(page.locator(".vis-box.timeline-node").first()).toBeVisible();
+});
+
 test("has no horizontal page overflow", async ({ page }) => {
   for (const path of [
     "/calendar",
