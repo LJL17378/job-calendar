@@ -2,17 +2,7 @@ import { X } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useStore } from "../data/store";
 import { createId } from "../lib/id";
-import type { Application, Company, PipelineStage } from "../types/domain";
-
-const defaults = [
-  "关注中",
-  "已投递",
-  "笔试/OA",
-  "一面",
-  "二面",
-  "终面",
-  "Offer",
-];
+import type { Application, Company } from "../types/domain";
 
 export function ApplicationEditor({ onClose }: { onClose: () => void }) {
   const { addApplication } = useStore();
@@ -31,16 +21,6 @@ export function ApplicationEditor({ onClose }: { onClose: () => void }) {
       website: "",
       color: "#5b6ee1",
     };
-    const stages: PipelineStage[] = defaults.map((name, position) => ({
-      id: createId("stage"),
-      applicationId,
-      name,
-      position,
-      status: position === 0 ? "active" : "pending",
-      plannedAt: null,
-      completedAt: null,
-      color: ["#5b6ee1", "#e76f51", "#2a9d8f"][position % 3],
-    }));
     const application: Application = {
       id: applicationId,
       companyId,
@@ -55,10 +35,10 @@ export function ApplicationEditor({ onClose }: { onClose: () => void }) {
       tags: [],
       notes: notes.trim(),
       status: "active",
-      currentStageId: stages[0].id,
+      currentStageId: null,
       createdAt: new Date().toISOString(),
     };
-    addApplication(company, application, stages);
+    addApplication(company, application, []);
     onClose();
   }
   return (

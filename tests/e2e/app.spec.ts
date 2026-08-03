@@ -14,6 +14,8 @@ test("calendar exposes timed week, month, year, and three-day views", async ({
     await expect(
       page.getByRole("button", { name: label, exact: true }),
     ).toBeAttached();
+  await page.getByRole("button", { name: "3 日", exact: true }).click();
+  await expect(page.locator(".fc-col-header-cell")).toHaveCount(3);
 });
 
 test("desktop creates an event from the calendar context menu", async ({
@@ -30,13 +32,16 @@ test("desktop creates an event from the calendar context menu", async ({
   await expect(page.getByRole("heading", { name: "新建日程" })).toBeVisible();
 });
 
-test("job pipeline can advance and preserves activity history", async ({
+test("job detail creates a calendar node already bound to the application", async ({
   page,
 }) => {
   await page.goto("/applications/app-byte");
-  await page.getByRole("button", { name: /二面/ }).click();
-  await expect(page.getByText("推进记录")).toBeVisible();
-  await expect(page.locator(".history-panel").getByText("二面")).toBeVisible();
+  await page.getByRole("button", { name: "新增节点" }).click();
+  await expect(page.getByRole("heading", { name: "新建日程" })).toBeVisible();
+  await expect(page.locator('label:has-text("关联岗位") select')).toHaveValue("app-byte");
+  await page.getByPlaceholder("例如：字节跳动 · 一面").fill("HR 沟通");
+  await page.getByRole("button", { name: "保存日程" }).click();
+  await expect(page.locator(".node-list").getByText("HR 沟通")).toBeVisible();
 });
 
 test("mobile uses bottom navigation and vertical timeline", async ({

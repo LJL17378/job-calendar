@@ -15,7 +15,7 @@ import { probeCloudConnectivity } from "../lib/supabase";
 
 const nav = [
   { to: "/calendar", label: "日历", icon: CalendarDays },
-  { to: "/timeline", label: "Timeline", icon: LayoutDashboard },
+  { to: "/timeline", label: "时间线", icon: LayoutDashboard },
   { to: "/applications", label: "岗位", icon: BriefcaseBusiness },
   { to: "/import", label: "导入", icon: Download },
   { to: "/settings", label: "设置", icon: Settings },

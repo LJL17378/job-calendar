@@ -42,7 +42,7 @@ export async function cloudAddApplication(userId: string, company: Company, appl
   if (!supabase) return
   report((await supabase.from('companies').upsert({ id: company.id, user_id: userId, name: company.name, website: company.website, color: company.color })).error)
   report((await supabase.from('applications').upsert(applicationRow(userId, application, false))).error)
-  report((await supabase.from('application_stages').upsert(stages.map((stage) => stageRow(userId, stage)))).error)
+  if (stages.length) report((await supabase.from('application_stages').upsert(stages.map((stage) => stageRow(userId, stage)))).error)
   report((await supabase.from('applications').update({ current_stage_id: application.currentStageId }).eq('id', application.id)).error)
 }
 export async function cloudUpdateApplication(userId: string, application: Application) { if (supabase) report((await supabase.from('applications').upsert(applicationRow(userId, application))).error) }

@@ -404,6 +404,8 @@ export default function CalendarPage() {
             eventResizableFromStart
             eventStartEditable
             eventDurationEditable
+            eventMinHeight={24}
+            eventShortHeight={30}
             dayMaxEvents
             events={events}
             views={{

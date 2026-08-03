@@ -8,7 +8,7 @@ import { useStore } from "../data/store";
 import { formatDateTime } from "../lib/date";
 
 export default function ApplicationsPage() {
-  const { applications, companies, stages } = useStore();
+  const { applications, companies, events } = useStore();
   const [open, setOpen] = useState(false);
   const active = useMemo(
     () => applications.filter((application) => application.status === "active"),
@@ -62,20 +62,18 @@ export default function ApplicationsPage() {
           <div className="application-list-header" aria-hidden="true">
             <span>岗位</span>
             <span>状态</span>
-            <span>当前阶段</span>
-            <span>流程</span>
+            <span>日程节点</span>
+            <span>下个安排</span>
             <span>最近更新</span>
           </div>
           {applications.map((application) => {
             const company = companies.find(
               (item) => item.id === application.companyId,
             );
-            const current = stages.find(
-              (stage) => stage.id === application.currentStageId,
-            );
-            const allStages = stages.filter(
-              (stage) => stage.applicationId === application.id,
-            );
+            const linkedEvents = events
+              .filter((event) => event.applicationId === application.id)
+              .sort((a, b) => a.start.localeCompare(b.start));
+            const nextEvent = linkedEvents.find((event) => new Date(event.end).getTime() >= Date.now());
             return (
               <Link
                 className="application-row"
@@ -101,23 +99,15 @@ export default function ApplicationsPage() {
                   </span>
                 </span>
                 <div className="application-stage">
-                  <strong>{current?.name ?? "未设置"}</strong>
-                  <span>
-                    {current ? current.position + 1 : 0}/{allStages.length}
-                  </span>
+                  <strong>{linkedEvents.length} 个节点</strong>
+                  <span>{linkedEvents.length ? "已关联日历" : "尚未安排"}</span>
                 </div>
                 <div className="application-progress">
-                  <div className="progress-track">
-                    <i
-                      style={{
-                        width: `${(((current?.position ?? -1) + 1) / Math.max(allStages.length, 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
+                  <span>{nextEvent ? formatDateTime(nextEvent.start) : "暂无安排"}</span>
                 </div>
                 <time>
                   {formatDateTime(
-                    current?.completedAt ?? application.createdAt,
+                    linkedEvents.at(-1)?.start ?? application.createdAt,
                   )}
                 </time>
               </Link>
