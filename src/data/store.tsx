@@ -9,6 +9,7 @@ import { cloudAddApplication, cloudDeleteEvent, cloudImportEvents, cloudMoveStag
 const STORAGE_KEY = 'job-calendar:data:v1'
 
 interface StoreApi extends AppData {
+  cloudLoading: boolean
   saveEvent: (event: CalendarEvent) => void
   deleteEvent: (id: string) => void
   saveException: (exception: CalendarEventException) => void
@@ -37,7 +38,10 @@ function loadData(): AppData {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { session, demoMode } = useAuth()
-  const [data, setData] = useState<AppData>(loadData)
+  const [data, setData] = useState<AppData>(() => demoMode ? loadData() : {
+    calendars: [], events: [], exceptions: [], companies: [], applications: [], stages: [], transitions: [], holidayEnabled: true,
+  })
+  const [cloudLoading, setCloudLoading] = useState(!demoMode)
   const commit = useCallback((updater: (current: AppData) => AppData) => {
     setData((current) => {
       const next = updater(current)
@@ -47,12 +51,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [demoMode])
 
   useEffect(() => {
-    if (!session?.user.id || demoMode) return
-    void loadCloudData().then(setData).catch((error: unknown) => console.error('[Job Calendar / load]', error))
+    if (demoMode) { setCloudLoading(false); return }
+    if (!session?.user.id) return
+    setCloudLoading(true)
+    void loadCloudData()
+      .then(setData)
+      .catch((error: unknown) => console.error('[Job Calendar / load]', error))
+      .finally(() => setCloudLoading(false))
   }, [demoMode, session?.user.id])
 
   const api = useMemo<StoreApi>(() => ({
     ...data,
+    cloudLoading,
     saveEvent: (event) => { commit((current) => ({ ...current, events: current.events.some((item) => item.id === event.id) ? current.events.map((item) => item.id === event.id ? event : item) : [...current.events, event] })); if (session) void cloudSaveEvent(session.user.id, event) },
     deleteEvent: (id) => { commit((current) => ({ ...current, events: current.events.filter((event) => event.id !== id), exceptions: current.exceptions.filter((exception) => exception.eventId !== id) })); if (session) void cloudDeleteEvent(id) },
     saveException: (exception) => {
@@ -104,7 +114,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     toggleCalendar: (id) => commit((current) => { const next = current.calendars.map((calendar) => calendar.id === id ? { ...calendar, visible: !calendar.visible } : calendar); const changed = next.find((calendar) => calendar.id === id); if (changed && session) void cloudToggleCalendar(id, changed.visible); return { ...current, calendars: next } }),
     toggleHoliday: () => commit((current) => { const enabled = !current.holidayEnabled; if (session) void cloudToggleHoliday(session.user.id, enabled); return { ...current, holidayEnabled: enabled } }),
     resetDemo: () => commit(() => createSeedData()),
-  }), [commit, data, session])
+  }), [cloudLoading, commit, data, session])
 
   return <StoreContext.Provider value={api}>{children}</StoreContext.Provider>
 }

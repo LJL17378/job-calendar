@@ -506,12 +506,17 @@ button:disabled {
 .fc .holiday-day,
 .fc .holiday-workday {
   pointer-events: none;
+  border-left-width: 2px;
+  opacity: 0.88;
 }
 .fc .holiday-day .fc-event-title,
 .fc .holiday-workday .fc-event-title {
   display: block;
-  color: #18766b;
+  color: inherit;
   font-size: 9px;
+}
+.fc .holiday-workday {
+  color: #765000;
 }
 .fc .fc-multimonth-title {
   font-family: Georgia, serif;

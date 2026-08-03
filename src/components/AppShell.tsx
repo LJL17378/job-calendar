@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
+import { useStore } from "../data/store";
 import { probeCloudConnectivity } from "../lib/supabase";
 
 const nav = [
@@ -22,6 +23,7 @@ const nav = [
 
 export function AppShell() {
   const { demoMode, loading, session } = useAuth();
+  const { cloudLoading } = useStore();
   const [dark, setDark] = useState(
     () => localStorage.getItem("job-calendar:theme") === "dark",
   );
@@ -66,6 +68,12 @@ export function AppShell() {
       </div>
     );
   if (!demoMode && !session) return <Navigate to="/login" replace />;
+  if (cloudLoading)
+    return (
+      <div className="route-loading">
+        <span />
+      </div>
+    );
   return (
     <div className="app-shell">
       <aside className="sidebar">
