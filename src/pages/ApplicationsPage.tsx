@@ -1,4 +1,4 @@
-import { ArrowUpRight, BriefcaseBusiness, MapPin, Plus } from "lucide-react";
+import { BriefcaseBusiness, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApplicationEditor } from "../components/ApplicationEditor";
@@ -19,9 +19,13 @@ export default function ApplicationsPage() {
       <PageHeader
         title="岗位"
         actions={
-          <button className="primary-button" onClick={() => setOpen(true)}>
-            <Plus size={18} />
-            添加岗位
+          <button
+            className="toolbar-add-button"
+            aria-label="添加岗位"
+            title="添加岗位"
+            onClick={() => setOpen(true)}
+          >
+            <Plus size={21} />
           </button>
         }
       />
@@ -54,7 +58,14 @@ export default function ApplicationsPage() {
           description="添加第一个岗位并开始记录招聘流程。"
         />
       ) : (
-        <div className="application-grid">
+        <div className="application-list">
+          <div className="application-list-header" aria-hidden="true">
+            <span>岗位</span>
+            <span>状态</span>
+            <span>当前阶段</span>
+            <span>流程</span>
+            <span>最近更新</span>
+          </div>
           {applications.map((application) => {
             const company = companies.find(
               (item) => item.id === application.companyId,
@@ -67,42 +78,35 @@ export default function ApplicationsPage() {
             );
             return (
               <Link
-                className="application-card"
+                className="application-row"
                 key={application.id}
                 to={`/applications/${application.id}`}
               >
-                <div className="card-top">
-                  <span
-                    className="company-avatar"
-                    style={{ background: company?.color }}
-                  >
-                    {company?.name.slice(0, 1)}
-                  </span>
-                  <span className={`status-pill ${application.status}`}>
+                <div className="application-identity">
+                  <i style={{ background: company?.color }} />
+                  <div>
+                    <strong>{application.role}</strong>
+                    <span>
+                      {company?.name}
+                      {application.location ? ` · ${application.location}` : ""}
+                    </span>
+                  </div>
+                </div>
+                <span className={`application-status ${application.status}`}>
+                  <i />
+                  <span>
                     {application.status === "active"
                       ? "进行中"
                       : application.status}
                   </span>
-                </div>
-                <div>
-                  <span className="company-name">{company?.name}</span>
-                  <h2>{application.role}</h2>
-                </div>
-                <div className="application-meta">
-                  <span>
-                    <MapPin size={15} />
-                    {application.location || "地点待定"}
-                  </span>
-                  <span>{application.source || "手动添加"}</span>
-                </div>
-                <div className="stage-progress">
-                  <div>
-                    <span>当前阶段</span>
-                    <strong>{current?.name ?? "未设置"}</strong>
-                  </div>
+                </span>
+                <div className="application-stage">
+                  <strong>{current?.name ?? "未设置"}</strong>
                   <span>
                     {current ? current.position + 1 : 0}/{allStages.length}
                   </span>
+                </div>
+                <div className="application-progress">
                   <div className="progress-track">
                     <i
                       style={{
@@ -111,15 +115,11 @@ export default function ApplicationsPage() {
                     />
                   </div>
                 </div>
-                <footer>
-                  <span>
-                    更新于{" "}
-                    {formatDateTime(
-                      current?.completedAt ?? application.createdAt,
-                    )}
-                  </span>
-                  <ArrowUpRight size={18} />
-                </footer>
+                <time>
+                  {formatDateTime(
+                    current?.completedAt ?? application.createdAt,
+                  )}
+                </time>
               </Link>
             );
           })}
