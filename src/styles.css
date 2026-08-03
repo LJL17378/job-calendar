@@ -885,6 +885,36 @@ button:disabled {
   border-radius: 4px;
   background: var(--panel-subtle);
 }
+.auth-card .otp-input {
+  height: 54px;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  letter-spacing: 0.32em;
+  text-align: center;
+}
+.auth-secondary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.auth-secondary-actions button {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 11px;
+  cursor: pointer;
+}
+.auth-secondary-actions button:hover:not(:disabled) {
+  color: var(--text);
+}
+.auth-secondary-actions button:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
 
 /* Applications */
 .stat-strip {
