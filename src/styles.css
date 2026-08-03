@@ -22,6 +22,10 @@
   --line-strong: #d9d9d5;
   --accent: #5b6ee1;
   --accent-soft: #eef0ff;
+  --holiday-bg: #e2f2ef;
+  --holiday-text: #155f57;
+  --workday-bg: #fff0cf;
+  --workday-text: #765000;
   --shadow: 0 18px 50px rgba(37, 37, 33, 0.12);
   --radius: 4px;
 }
@@ -36,6 +40,10 @@
   --line-strong: #4a4944;
   --accent: #8d9aff;
   --accent-soft: #292e4f;
+  --holiday-bg: #203d39;
+  --holiday-text: #a9e2da;
+  --workday-bg: #493b1e;
+  --workday-text: #f3d48a;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
 }
 * {
@@ -506,17 +514,30 @@ button:disabled {
 .fc .holiday-day,
 .fc .holiday-workday {
   pointer-events: none;
-  border-left-width: 2px;
-  opacity: 0.88;
+  border-left-width: 2px !important;
+  opacity: 1;
+  box-shadow: none;
+}
+.fc .holiday-day {
+  border-color: var(--holiday-text) !important;
+  background: var(--holiday-bg) !important;
+  color: var(--holiday-text) !important;
+}
+.fc .holiday-workday {
+  border-color: var(--workday-text) !important;
+  background: var(--workday-bg) !important;
+  color: var(--workday-text) !important;
 }
 .fc .holiday-day .fc-event-title,
 .fc .holiday-workday .fc-event-title {
   display: block;
   color: inherit;
-  font-size: 9px;
-}
-.fc .holiday-workday {
-  color: #765000;
+  overflow: hidden;
+  padding: 1px 2px;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
 }
 .fc .fc-multimonth-title {
   font-family: Georgia, serif;
