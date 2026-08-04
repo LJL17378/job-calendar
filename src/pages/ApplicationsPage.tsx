@@ -29,8 +29,8 @@ export default function ApplicationsPage() {
           </button>
         }
       />
-      <div className="stat-strip">
-        <div>
+      <div className="application-summary" aria-label="岗位概览">
+        <div className="summary-primary">
           <strong>{applications.length}</strong>
           <span>全部岗位</span>
         </div>
@@ -73,7 +73,9 @@ export default function ApplicationsPage() {
             const linkedEvents = events
               .filter((event) => event.applicationId === application.id)
               .sort((a, b) => a.start.localeCompare(b.start));
-            const nextEvent = linkedEvents.find((event) => new Date(event.end).getTime() >= Date.now());
+            const nextEvent = linkedEvents.find(
+              (event) => new Date(event.end).getTime() >= Date.now(),
+            );
             return (
               <Link
                 className="application-row"
@@ -103,7 +105,9 @@ export default function ApplicationsPage() {
                   <span>{linkedEvents.length ? "已关联日历" : "尚未安排"}</span>
                 </div>
                 <div className="application-progress">
-                  <span>{nextEvent ? formatDateTime(nextEvent.start) : "暂无安排"}</span>
+                  <span>
+                    {nextEvent ? formatDateTime(nextEvent.start) : "暂无安排"}
+                  </span>
                 </div>
                 <time>
                   {formatDateTime(

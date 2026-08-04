@@ -1,13 +1,4 @@
-import {
-  Bell,
-  Database,
-  DownloadCloud,
-  ExternalLink,
-  Globe2,
-  Moon,
-  RotateCcw,
-  ShieldCheck,
-} from "lucide-react";
+import { DownloadCloud, ExternalLink, Moon, RotateCcw } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { useAuth } from "../auth/AuthProvider";
 import { useStore } from "../data/store";
@@ -18,16 +9,10 @@ export default function SettingsPage() {
   return (
     <section className="page settings-page">
       <PageHeader title="设置" />
-      <div className="settings-grid">
-        <section className="content-card settings-section">
+      <div className="settings-surface">
+        <section className="settings-section">
           <header>
-            <div className="section-icon">
-              <Globe2 size={21} />
-            </div>
-            <div>
-              <h2>区域与时间</h2>
-              <p>所有日程默认使用以下规则。</p>
-            </div>
+            <h2>日历</h2>
           </header>
           <div className="setting-row">
             <div>
@@ -51,15 +36,9 @@ export default function SettingsPage() {
             <span className="setting-value">24 小时</span>
           </div>
         </section>
-        <section className="content-card settings-section">
+        <section className="settings-section">
           <header>
-            <div className="section-icon purple">
-              <Bell size={21} />
-            </div>
-            <div>
-              <h2>提醒与外观</h2>
-              <p>第一版保存提醒偏好，系统推送稍后提供。</p>
-            </div>
+            <h2>提醒与外观</h2>
           </header>
           <div className="setting-row">
             <div>
@@ -76,19 +55,12 @@ export default function SettingsPage() {
             <Moon size={19} />
           </div>
         </section>
-        <section className="content-card settings-section">
+        <section className="settings-section">
           <header>
-            <div className="section-icon green">
-              <ShieldCheck size={21} />
-            </div>
-            <div>
-              <h2>账户与数据</h2>
-              <p>
-                {demoMode
-                  ? "当前数据保存在此浏览器。"
-                  : "数据由 Supabase RLS 安全隔离。"}
-              </p>
-            </div>
+            <h2>账户与数据</h2>
+            <p>
+              {demoMode ? "数据保存在此浏览器" : "已通过 Supabase 安全同步"}
+            </p>
           </header>
           {demoMode && (
             <button
@@ -110,15 +82,9 @@ export default function SettingsPage() {
             </button>
           )}
         </section>
-        <section className="content-card settings-section">
+        <section className="settings-section">
           <header>
-            <div className="section-icon amber">
-              <Database size={21} />
-            </div>
-            <div>
-              <h2>外部连接</h2>
-              <p>连接器不会阻塞核心日历使用。</p>
-            </div>
+            <h2>外部连接</h2>
           </header>
           <div className="integration-row">
             <div className="integration-logo">飞</div>

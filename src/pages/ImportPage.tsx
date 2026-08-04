@@ -1,10 +1,4 @@
-import {
-  CalendarCheck,
-  CheckCircle2,
-  FileUp,
-  RefreshCw,
-  UploadCloud,
-} from "lucide-react";
+import { CheckCircle2, FileUp, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { useStore } from "../data/store";
@@ -47,15 +41,11 @@ export default function ImportPage() {
       <PageHeader title="导入日历" />
       <div className="import-layout">
         <section className="content-card import-card">
-          <header>
-            <div className="section-icon">
-              <UploadCloud size={22} />
-            </div>
+          <header className="plain-section-header">
             <div>
-              <h2>ICS 文件</h2>
+              <h2>从文件导入</h2>
               <p>
-                兼容 Apple Calendar、Google Calendar、Outlook 等导出的 .ics
-                文件。
+                支持 Apple 日历、Google Calendar 和 Outlook 导出的 .ics 文件
               </p>
             </div>
           </header>
@@ -133,23 +123,19 @@ export default function ImportPage() {
           )}
         </section>
         <section className="content-card holiday-card">
-          <header>
-            <div className="section-icon green">
-              <CalendarCheck size={22} />
-            </div>
+          <header className="plain-section-header">
             <div>
               <h2>中国节假日</h2>
-              <p>法定节假日和调休补班，独立显示为只读系统日历。</p>
+              <p>法定节假日与调休补班</p>
             </div>
           </header>
-          <div className="holiday-visual">
-            <span>2026</span>
-            <strong>中国大陆</strong>
+          <div className="holiday-calendar-row">
+            <i aria-hidden="true" />
             <div>
-              <i />
-              节假日 <i />
-              补班
+              <strong>中国大陆 · 2026</strong>
+              <span>只读日历，可随时隐藏</span>
             </div>
+            <span className="holiday-badge">系统日历</span>
           </div>
           <div className="holiday-status">
             <div>
