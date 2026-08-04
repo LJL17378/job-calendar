@@ -49,9 +49,19 @@ test("job detail creates a calendar node already bound to the application", asyn
   await page.getByRole("button", { name: "新增节点" }).click();
   await expect(page.getByRole("heading", { name: "新建日程" })).toBeVisible();
   await expect(page.locator('label:has-text("关联岗位") select')).toHaveValue("app-byte");
+  await expect(page.getByLabel("标题")).toHaveValue("字节跳动 · 前端工程师 · ");
   await page.getByPlaceholder("例如：字节跳动 · 一面").fill("HR 沟通");
   await page.getByRole("button", { name: "保存日程" }).click();
   await expect(page.locator(".node-list").getByText("HR 沟通")).toBeVisible();
+});
+
+test("job details can be edited on every viewport", async ({ page }) => {
+  await page.goto("/applications/app-byte");
+  await page.getByRole("button", { name: "编辑岗位" }).click();
+  await expect(page.getByLabel("岗位编辑器")).toBeVisible();
+  await page.getByRole("textbox", { name: "岗位", exact: true }).fill("高级前端工程师");
+  await page.getByRole("button", { name: "保存修改" }).click();
+  await expect(page.getByRole("heading", { name: "高级前端工程师" })).toBeVisible();
 });
 
 test("mobile uses bottom navigation and vertical timeline", async ({

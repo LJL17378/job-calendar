@@ -1034,7 +1034,7 @@ button:disabled {
   font-size: 24px;
   font-variant-numeric: tabular-nums;
   font-weight: 650;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.18em;
   text-align: center;
 }
 .auth-secondary-actions {
@@ -2201,6 +2201,15 @@ button:disabled {
   .compact-editor {
     margin: 0;
     border-radius: 10px 10px 0 0;
+  }
+  .application-editor {
+    height: min(92vh, 820px);
+  }
+  .application-editor > header {
+    padding-block: 16px;
+  }
+  .application-editor form {
+    padding-top: 15px;
   }
   .stat-strip {
     grid-template-columns: 1fr 1fr;

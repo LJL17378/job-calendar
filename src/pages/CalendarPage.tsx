@@ -17,13 +17,14 @@ import FullCalendar from "@fullcalendar/react";
 import rrulePlugin from "@fullcalendar/rrule";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type TouchEvent as ReactTouchEvent } from "react";
 import { EventEditor, type EventDraft } from "../components/EventEditor";
 import { EventDetails } from "../components/EventDetails";
 import { useStore } from "../data/store";
 import { createId } from "../lib/id";
 import { holidayInputs } from "../lib/holidays";
 import { getCalendarScrollMinutes } from "../lib/calendarScroll";
+import { getHorizontalSwipe } from "../lib/swipe";
 import type { CalendarEvent, CalendarEventException } from "../types/domain";
 
 type CalendarView =
@@ -99,6 +100,7 @@ function exceptionInputs(
 export default function CalendarPage() {
   const calendarRef = useRef<FullCalendar>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const store = useStore();
   const [view, setView] = useState<CalendarView>(() =>
     window.innerWidth < 680 ? "timeGridThreeDay" : "timeGridWeek",
@@ -156,6 +158,20 @@ export default function CalendarPage() {
   function changeView(next: CalendarView) {
     calendarRef.current?.getApi().changeView(next);
     setView(next);
+  }
+  function beginSwipe(event: ReactTouchEvent<HTMLDivElement>) {
+    if (window.innerWidth > 720 || event.touches.length !== 1) return;
+    const target = event.target as Element;
+    if (target.closest(".fc-event, button, a, input, textarea, select")) return;
+    swipeStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+  }
+  function finishSwipe(event: ReactTouchEvent<HTMLDivElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || event.changedTouches.length !== 1) return;
+    const direction = getHorizontalSwipe(start, { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY });
+    if (direction === 'next') calendarRef.current?.getApi().next();
+    if (direction === 'previous') calendarRef.current?.getApi().prev();
   }
   function updateVisibleRange(arg: DatesSetArg) {
     setTitle(arg.view.title);
@@ -343,7 +359,7 @@ export default function CalendarPage() {
             </div>
           </div>
         </aside>
-        <div className="calendar-panel">
+        <div className="calendar-panel" onTouchStart={beginSwipe} onTouchEnd={finishSwipe} onTouchCancel={() => { swipeStart.current = null }}>
           <div className="calendar-toolbar">
             <div className="date-controls">
               <button

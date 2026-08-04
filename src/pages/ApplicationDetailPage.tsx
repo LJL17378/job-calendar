@@ -1,7 +1,9 @@
-import { ArrowLeft, CalendarPlus, Clock3, MapPin, Plus } from 'lucide-react'
+import { ArrowLeft, CalendarPlus, Clock3, MapPin, Pencil, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { EventEditor, type EventDraft } from '../components/EventEditor'
+import { EventDetails } from '../components/EventDetails'
+import { ApplicationEditor } from '../components/ApplicationEditor'
 import { PageHeader } from '../components/PageHeader'
 import { useStore } from '../data/store'
 import { formatDateTime } from '../lib/date'
@@ -19,6 +21,8 @@ export default function ApplicationDetailPage() {
   const store = useStore()
   const [draft, setDraft] = useState<EventDraft | null>(null)
   const [selected, setSelected] = useState<CalendarEvent | null>(null)
+  const [editingEvent, setEditingEvent] = useState(false)
+  const [editingApplication, setEditingApplication] = useState(false)
   const application = store.applications.find((item) => item.id === id)
   const events = useMemo(
     () => store.events.filter((event) => event.applicationId === id).sort((a, b) => a.start.localeCompare(b.start)),
@@ -26,8 +30,9 @@ export default function ApplicationDetailPage() {
   )
   if (!application) return <Navigate to="/applications" replace />
   const company = store.companies.find((item) => item.id === application.companyId)
-  const closeEditor = () => { setDraft(null); setSelected(null) }
-  const addNode = () => setDraft(newEventDraft())
+  const closeEditor = () => { setDraft(null); setSelected(null); setEditingEvent(false) }
+  const addNode = () => { setSelected(null); setEditingEvent(false); setDraft(newEventDraft()) }
+  const titlePrefix = `${[company?.name, application.role].filter(Boolean).join(' · ')} · `
 
   return (
     <section className="page detail-page">
@@ -35,7 +40,7 @@ export default function ApplicationDetailPage() {
       <PageHeader
         title={application.role}
         meta={[company?.name, application.location, application.source, application.workMode].filter(Boolean).join(' · ')}
-        actions={<button className="primary-button" onClick={addNode}><Plus size={17} />新增节点</button>}
+        actions={<><button className="secondary-button" onClick={() => setEditingApplication(true)}><Pencil size={16} />编辑岗位</button><button className="primary-button" onClick={addNode}><Plus size={17} />新增节点</button></>}
       />
       <div className="detail-main">
         <section className="content-card">
@@ -48,8 +53,8 @@ export default function ApplicationDetailPage() {
           ) : (
             <div className="node-list">
               {events.map((event) => (
-                <button key={event.id} className="node-row" onClick={() => setSelected(event)}>
-                  <i style={{ background: store.calendars.find((calendar) => calendar.id === event.calendarId)?.color }} />
+                <button key={event.id} className="node-row" onClick={() => { setSelected(event); setEditingEvent(false) }}>
+                  <i style={{ background: event.color ?? store.calendars.find((calendar) => calendar.id === event.calendarId)?.color }} />
                   <div><strong>{event.title}</strong><span><Clock3 size={13} />{formatDateTime(event.start)} – {new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(event.end))}</span></div>
                   <span className="node-location">{event.location && <><MapPin size={13} />{event.location}</>}</span>
                 </button>
@@ -62,7 +67,9 @@ export default function ApplicationDetailPage() {
           <p className="notes-content">{application.notes || '还没有记录笔记。'}</p>
         </section>
       </div>
-      {(draft || selected) && <EventEditor event={selected} draft={draft} initialApplicationId={application.id} onClose={closeEditor} />}
+      {selected && !editingEvent && <EventDetails event={selected} onEdit={() => setEditingEvent(true)} onClose={closeEditor} />}
+      {(draft || (selected && editingEvent)) && <EventEditor event={selected} draft={draft} initialApplicationId={application.id} initialTitle={draft ? titlePrefix : undefined} onClose={closeEditor} />}
+      {editingApplication && <ApplicationEditor application={application} company={company} onClose={() => setEditingApplication(false)} />}
     </section>
   )
 }

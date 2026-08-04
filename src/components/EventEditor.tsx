@@ -16,11 +16,11 @@ const eventColorPresets = [
   { label: '准备', value: '#4f6bed' },
 ]
 
-export function EventEditor({ event, draft, occurrence, initialApplicationId, onClose }: { event: CalendarEvent | null; draft: EventDraft | null; occurrence?: EventDraft | null; initialApplicationId?: string; onClose: () => void }) {
+export function EventEditor({ event, draft, occurrence, initialApplicationId, initialTitle, onClose }: { event: CalendarEvent | null; draft: EventDraft | null; occurrence?: EventDraft | null; initialApplicationId?: string; initialTitle?: string; onClose: () => void }) {
   const { calendars, applications, companies, saveEvent, deleteEvent, saveException } = useStore()
   const fallbackStart = occurrence?.start ?? draft?.start ?? new Date().toISOString()
   const fallbackEnd = occurrence?.end ?? draft?.end ?? new Date(Date.now() + 3_600_000).toISOString()
-  const [title, setTitle] = useState(event?.title ?? '')
+  const [title, setTitle] = useState(event?.title ?? initialTitle ?? '')
   const [description, setDescription] = useState(event?.description ?? '')
   const [location, setLocation] = useState(event?.location ?? '')
   const [calendarId, setCalendarId] = useState(event?.calendarId ?? calendars.find((calendar) => calendar.kind === 'job')?.id ?? calendars[0]?.id ?? '')

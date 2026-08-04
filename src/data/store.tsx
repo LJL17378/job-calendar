@@ -4,7 +4,7 @@ import { createId } from '../lib/id'
 import type { AppData, Application, CalendarEvent, CalendarEventException, CalendarImportResult, Company, PipelineStage, StageTransition } from '../types/domain'
 import { createSeedData } from './seed'
 import { mergeImportedEvents } from './importMerge'
-import { cloudAddApplication, cloudDeleteEvent, cloudImportEvents, cloudMoveStage, cloudSaveEvent, cloudSaveException, cloudSaveStage, cloudToggleCalendar, cloudToggleHoliday, cloudUpdateApplication, loadCloudData } from './supabaseRepository'
+import { cloudAddApplication, cloudDeleteEvent, cloudImportEvents, cloudMoveStage, cloudSaveEvent, cloudSaveException, cloudSaveStage, cloudToggleCalendar, cloudToggleHoliday, cloudUpdateApplication, cloudUpdateCompany, loadCloudData } from './supabaseRepository'
 
 const STORAGE_KEY = 'job-calendar:data:v1'
 
@@ -14,7 +14,7 @@ interface StoreApi extends AppData {
   deleteEvent: (id: string) => void
   saveException: (exception: CalendarEventException) => void
   addApplication: (company: Company, application: Application, stages: PipelineStage[]) => void
-  updateApplication: (application: Application) => void
+  updateApplication: (application: Application, company?: Company) => void
   moveStage: (applicationId: string, targetStageId: string) => void
   saveStage: (stage: PipelineStage) => void
   importEvents: (events: CalendarEvent[]) => CalendarImportResult
@@ -77,7 +77,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (session) void cloudSaveException(session.user.id, normalized)
     },
     addApplication: (company, application, stages) => { commit((current) => ({ ...current, companies: current.companies.some((item) => item.id === company.id) ? current.companies : [...current.companies, company], applications: [...current.applications, application], stages: [...current.stages, ...stages] })); if (session) void cloudAddApplication(session.user.id, company, application, stages) },
-    updateApplication: (application) => { commit((current) => ({ ...current, applications: current.applications.map((item) => item.id === application.id ? application : item) })); if (session) void cloudUpdateApplication(session.user.id, application) },
+    updateApplication: (application, company) => {
+      commit((current) => ({
+        ...current,
+        applications: current.applications.map((item) => item.id === application.id ? application : item),
+        companies: company ? current.companies.map((item) => item.id === company.id ? company : item) : current.companies,
+      }))
+      if (session) {
+        void cloudUpdateApplication(session.user.id, application)
+        if (company) void cloudUpdateCompany(session.user.id, company)
+      }
+    },
     moveStage: (applicationId, targetStageId) => commit((current) => {
       const application = current.applications.find((item) => item.id === applicationId)
       const target = current.stages.find((stage) => stage.id === targetStageId)

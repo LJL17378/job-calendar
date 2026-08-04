@@ -21,7 +21,7 @@ describe('LoginPage', () => {
     verifyEmailOtp.mockReset().mockResolvedValue(null)
   })
 
-  it('supports manually entering the emailed six-digit code', async () => {
+  it('supports manually entering emailed numeric codes of varying lengths', async () => {
     render(<MemoryRouter><LoginPage /></MemoryRouter>)
 
     fireEvent.change(screen.getByLabelText('邮箱'), { target: { value: 'me@example.com' } })
@@ -32,10 +32,10 @@ describe('LoginPage', () => {
     expect(input).toHaveAttribute('inputmode', 'numeric')
     expect(input).toHaveAttribute('autocomplete', 'one-time-code')
 
-    fireEvent.change(input, { target: { value: '12a3456' } })
-    expect(input).toHaveValue('123456')
+    fireEvent.change(input, { target: { value: '12a345678' } })
+    expect(input).toHaveValue('12345678')
     fireEvent.click(screen.getByRole('button', { name: '验证并登录' }))
 
-    await waitFor(() => expect(verifyEmailOtp).toHaveBeenCalledWith('me@example.com', '123456'))
+    await waitFor(() => expect(verifyEmailOtp).toHaveBeenCalledWith('me@example.com', '12345678'))
   })
 })
